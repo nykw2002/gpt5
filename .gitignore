@@ -1,0 +1,22 @@
+# Environment variables
+.env
+
+# Cache directories
+embeddings_cache/
+__pycache__/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
