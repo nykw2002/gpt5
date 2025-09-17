@@ -384,10 +384,11 @@ class GeneralPurposeRAG:
     def adaptive_chunk_selection(self, query: str, query_classification: Dict[str, Any], max_chunks: int = 25) -> List[int]:
         """Select chunks based on query type and content"""
         print(f"Running adaptive chunk selection for {query_classification['primary_type']} query...")
-        
+
         query_embedding = self.get_embedding(query)
         if not query_embedding:
-            return []
+            print("Embedding failed, falling back to keyword-based selection...")
+            return self.fallback_chunk_selection(query, query_classification, max_chunks)
         
         # Calculate semantic similarities
         similarities = []
@@ -452,7 +453,67 @@ class GeneralPurposeRAG:
         print(f"  Final selection: {len(result)} chunks")
         
         return result
-    
+
+    def fallback_chunk_selection(self, query: str, query_classification: Dict[str, Any], max_chunks: int = 25) -> List[int]:
+        """Fallback chunk selection using keyword matching when embeddings fail"""
+        print("Using keyword-based fallback selection...")
+
+        query_lower = query.lower()
+        entity_keywords = query_classification.get('entity_keywords', [])
+
+        # Extract additional keywords from query
+        keywords = set(entity_keywords)
+
+        # Add common query terms
+        query_words = query_lower.split()
+        keywords.update([word for word in query_words if len(word) > 3])
+
+        print(f"  Searching for keywords: {list(keywords)}")
+
+        selected_chunks = set()
+
+        # Strategy 1: Direct keyword matching
+        for i, chunk in enumerate(self.chunks):
+            chunk_lower = chunk.lower()
+            score = 0
+
+            # Check for entity keywords (high priority)
+            for entity in entity_keywords:
+                if entity in chunk_lower:
+                    score += 10
+
+            # Check for other keywords
+            for keyword in keywords:
+                if keyword in chunk_lower:
+                    score += 1
+
+            # Check chunk metadata for relevant content
+            metadata = self.chunk_metadata[i]
+            if metadata['type'] == 'complaint_data':
+                score += 2
+
+            # Add chunks with sufficient score
+            if score >= 5:  # Threshold for relevance
+                selected_chunks.add(i)
+
+        # Strategy 2: Ensure we have complaint data for counting queries
+        if query_classification['primary_type'] == 'counting':
+            complaint_chunks = [i for i, meta in enumerate(self.chunk_metadata)
+                              if meta['type'] == 'complaint_data']
+
+            # Add complaint chunks that contain any entity keywords
+            for chunk_idx in complaint_chunks:
+                chunk_lower = self.chunks[chunk_idx].lower()
+                for entity in entity_keywords:
+                    if entity in chunk_lower:
+                        selected_chunks.add(chunk_idx)
+
+        # Limit to max_chunks
+        result = sorted(list(selected_chunks))[:max_chunks]
+        print(f"  Fallback selection: {len(result)} chunks")
+
+        return result
+
     def generate_adaptive_prompt(self, query: str, query_classification: Dict[str, Any], context_chunks: List[str]) -> str:
         """Generate prompt based on query type"""
         
@@ -466,7 +527,7 @@ class GeneralPurposeRAG:
     def generate_counting_prompt(self, query: str, context_chunks: List[str]) -> str:
         """Generate systematic counting prompt"""
         context = "\n\n".join([f"Data Block {i+1}:\n{chunk}" for i, chunk in enumerate(context_chunks)])
-        
+
         return f"""You are a systematic data analyst. Use step-by-step analysis to ensure 100% accuracy.
 
 TASK: {query}
@@ -481,7 +542,7 @@ Block 1 Analysis:
 - Running total after Block 1: [number]
 
 Block 2 Analysis:
-- Scan every line for relevant items  
+- Scan every line for relevant items
 - List any items found: [list items or state "NONE"]
 - Running total after Block 2: [number]
 
@@ -493,15 +554,23 @@ After processing all blocks, list every item found with block reference:
 2. [Item details] (from Block Y)
 ...
 
-STEP 3: Verification
+STEP 3: Verification and Final Answer
 - Count items in your complete list: [number]
 - Verify this matches your final running total: [Yes/No]
 - If mismatch, recount and correct
 
+FINAL ANSWER (REQUIRED FORMAT):
+There are [total number] complaints from [entity]. Here is the complete list:
+
+1. [Item ID/Reference] - [Brief description]
+2. [Item ID/Reference] - [Brief description]
+3. [Item ID/Reference] - [Brief description]
+...
+
 DATA TO ANALYZE:
 {context}
 
-IMPORTANT: You must process every single block individually and show your running count after each block. Do not summarize or skip blocks."""
+IMPORTANT: You must process every single block individually and show your running count after each block. End with the concise FINAL ANSWER format."""
     
     def generate_analysis_prompt(self, query: str, context_chunks: List[str]) -> str:
         """Generate analytical prompt"""

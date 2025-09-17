@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Purpose RAG System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="globals.css">
+    <style>
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: hsl(25, 85%, 65%);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: hsl(25, 85%, 55%);
+        }
+
+        /* Loading animation */
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s linear infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* Fade in animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-white text-black min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-2" style="color: hsl(25, 85%, 65%);">
+                General Purpose RAG System
+            </h1>
+            <p class="text-gray-600 text-lg">
+                GPT-5 Optimized with Query-Adaptive Processing
+            </p>
+        </header>
+
+        <!-- Status Section -->
+        <div class="mb-6">
+            <div id="status" class="bg-gray-100 border-l-4 border-orange-400 p-4 rounded-r-lg">
+                <div class="flex items-center">
+                    <div id="status-icon" class="mr-3">
+                        <svg class="w-5 h-5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p id="status-text" class="font-medium text-gray-800">
+                            System initializing...
+                        </p>
+                        <p id="status-detail" class="text-sm text-gray-600">
+                            Loading document and creating embeddings
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Upload Section -->
+        <div class="mb-6">
+            <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Document Management</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Current Document
+                        </label>
+                        <div class="flex items-center space-x-3">
+                            <input
+                                type="text"
+                                id="current-doc"
+                                value="test.txt"
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                placeholder="Enter document path"
+                            >
+                            <button
+                                id="load-doc-btn"
+                                class="px-4 py-2 bg-orange-400 text-white rounded-md hover:bg-orange-500 transition duration-200"
+                            >
+                                Load
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Document Stats
+                        </label>
+                        <div id="doc-stats" class="text-sm text-gray-600">
+                            <div>Chunks: <span id="chunk-count">-</span></div>
+                            <div>Size: <span id="doc-size">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Interface -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Query Input Section -->
+            <div class="lg:col-span-2">
+                <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4">Query Interface</h2>
+
+                    <!-- Query Type Indicator -->
+                    <div id="query-type-indicator" class="mb-4 hidden">
+                        <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                            <span id="query-type-text">Query Type</span>
+                        </div>
+                    </div>
+
+                    <!-- Query Input -->
+                    <div class="mb-4">
+                        <textarea
+                            id="query-input"
+                            placeholder="Ask your question here... (e.g., 'How many complaints are from Israel?', 'Analyze the distribution of complaints', 'Find all QE- entries')"
+                            class="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+                        ></textarea>
+                    </div>
+
+                    <!-- Query Controls -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <button
+                                id="submit-btn"
+                                class="px-6 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500 transition duration-200 font-medium"
+                                disabled
+                            >
+                                <span id="submit-text">Submit Query</span>
+                            </button>
+                            <button
+                                id="clear-btn"
+                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            <span id="char-count">0</span>/1000 characters
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response Section -->
+                <div id="response-section" class="mt-6 hidden">
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-semibold">Response</h2>
+                            <div id="response-meta" class="text-sm text-gray-500">
+                                <!-- Query metadata will be displayed here -->
+                            </div>
+                        </div>
+                        <div id="response-content" class="prose max-w-none custom-scrollbar">
+                            <!-- Response content will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Quick Examples -->
+                <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4">Example Queries</h3>
+                    <div class="space-y-3">
+                        <button class="example-query w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition duration-200 text-sm">
+                            How many complaints are from Israel?
+                        </button>
+                        <button class="example-query w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition duration-200 text-sm">
+                            Analyze the distribution of complaints by country
+                        </button>
+                        <button class="example-query w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition duration-200 text-sm">
+                            Find all entries with QE- batch codes
+                        </button>
+                        <button class="example-query w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition duration-200 text-sm">
+                            What are the most common complaint types?
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4">System Info</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Status:</span>
+                            <span id="sys-status" class="font-medium">Initializing</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Model:</span>
+                            <span class="font-medium">GPT-5</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Embeddings:</span>
+                            <span class="font-medium">Ada-002</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Chunks Loaded:</span>
+                            <span id="sys-chunks" class="font-medium">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query History -->
+                <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4">Recent Queries</h3>
+                    <div id="query-history" class="space-y-2 text-sm">
+                        <p class="text-gray-500 text-center py-4">No queries yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 max-w-sm mx-4">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto mb-4"></div>
+                <h3 class="text-lg font-semibold mb-2">Processing Query</h3>
+                <p id="loading-text" class="text-gray-600 loading-dots">Analyzing your request</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  /* Updated color scheme to orange/white/black minimalist design */
+  --background: 0 0% 100%; /* White background */
+  --foreground: 0 0% 9%; /* Black text */
+  --card: 0 0% 98%; /* Light gray for card backgrounds */
+  --card-foreground: 0 0% 9%; /* Black text inside cards */
+  --popover: 0 0% 100%; /* White for modal backgrounds */
+  --popover-foreground: 0 0% 9%; /* Black text in modals */
+  --primary: 25 85% 65%; /* Coral Orange for primary actions */
+  --primary-foreground: 0 0% 100%; /* White text on primary buttons */
+  --secondary: 25 70% 75%; /* Light Salmon for secondary accents */
+  --secondary-foreground: 0 0% 9%; /* Black text for secondary elements */
+  --muted: 0 0% 95%; /* Light gray for muted elements */
+  --muted-foreground: 0 0% 45%; /* Dark gray for muted text */
+  --accent: 25 70% 75%; /* Light Salmon for highlights */
+  --accent-foreground: 0 0% 9%; /* Black text for accent elements */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 85%; /* Light gray for borders */
+  --input: 0 0% 100%; /* White for input fields */
+  --ring: 25 85% 65%; /* Coral Orange for focus rings */
+  --radius: 0.5rem; /* Rounded corners for softer look */
+}
+
+.dark {
+  --background: 0 0% 9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 15%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 25 85% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 65%;
+  --accent: 25 70% 75%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 25 85% 65%;
+}
+
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  body {
+    @apply bg-white text-black;
+    font-family: var(--font-geist-sans);
+  }
+}
