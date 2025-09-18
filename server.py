@@ -180,14 +180,26 @@ def process_query():
         # Extract concise answer for counting queries while preserving full reasoning
         processed_answer = extract_final_answer(result['answer'], result.get('query_classification', {}))
 
+        # Apply intelligent summarization if needed
+        query_type = result.get('query_classification', {}).get('primary_type', 'general')
+        summarized_answer = rag_system.summarize_if_needed(processed_answer, query_type)
+
+        # Evaluate answer quality metrics (Groundedness, Accuracy, Relevance)
+        relevant_chunk_indices = result.get('relevant_chunk_indices', [])
+        source_chunks = [rag_system.chunks[i] for i in relevant_chunk_indices] if relevant_chunk_indices else []
+        quality_metrics = rag_system.evaluate_answer_quality(question, summarized_answer, source_chunks)
+
         # Format the response
         response_data = {
             'question': result['question'],
-            'answer': processed_answer,
+            'answer': summarized_answer,  # This is now the final summarized answer for UI
+            'original_answer': processed_answer,  # The extracted answer before summarization
             'full_reasoning': result['answer'],  # Keep full reasoning for debugging
             'query_classification': result.get('query_classification', {}),
             'chunks_analyzed': result.get('chunks_analyzed', 0),
-            'chunk_analysis': result.get('chunk_analysis', {})
+            'chunk_analysis': result.get('chunk_analysis', {}),
+            'was_summarized': summarized_answer != processed_answer,  # Flag to indicate if summarization occurred
+            'quality_metrics': quality_metrics  # Add quality evaluation metrics
         }
 
         return jsonify({

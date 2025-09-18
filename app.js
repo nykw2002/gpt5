@@ -217,11 +217,18 @@ class RAGInterface {
 
     displayResponse(data) {
         // Update response metadata
+        const summarizedBadge = data.was_summarized ?
+            '<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">summarized</span>' : '';
+
+        const qualityBadge = this.getQualityBadge(data.quality_metrics);
+
         this.responseMeta.innerHTML = `
             <div class="flex items-center space-x-4">
                 <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
                     ${data.query_classification?.primary_type || 'general'}
                 </span>
+                ${summarizedBadge}
+                ${qualityBadge}
                 <span class="text-gray-500">${data.chunks_analyzed || 0} chunks analyzed</span>
                 <span class="text-gray-500">
                     ${data.query_classification?.confidence ?
@@ -233,12 +240,151 @@ class RAGInterface {
         // Display answer
         this.responseContent.innerHTML = this.formatResponse(data.answer);
 
+        // Add quality metrics section if available
+        if (data.quality_metrics) {
+            this.responseContent.innerHTML += this.createQualityMetricsSection(data.quality_metrics);
+        }
+
         // Show response section
         this.responseSection.classList.remove('hidden');
         this.responseSection.classList.add('fade-in');
 
         // Scroll to response
         this.responseSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    getQualityBadge(metrics) {
+        if (!metrics || !metrics.overall_assessment) {
+            return '<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">metrics unavailable</span>';
+        }
+
+        const overall = metrics.overall_assessment;
+        const score = overall.average_score;
+
+        if (overall.acceptable) {
+            return `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">quality: ${score}%</span>`;
+        } else {
+            return `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">needs review: ${score}%</span>`;
+        }
+    }
+
+    createQualityMetricsSection(metrics) {
+        const overall = metrics.overall_assessment;
+        const needsReview = overall.needs_review;
+
+        return `
+            <div class="mt-6 border-t pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Quality Metrics</h3>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium">Overall: ${overall.average_score}%</span>
+                        <div class="w-3 h-3 rounded-full ${needsReview ? 'bg-red-500' : 'bg-green-500'}"></div>
+                        ${needsReview ? '<span class="text-xs text-red-600 font-medium">REVIEW REQUIRED</span>' : '<span class="text-xs text-green-600 font-medium">ACCEPTABLE</span>'}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    ${this.createMetricCard('Groundedness', metrics.groundedness, 'How well the answer is supported by source data')}
+                    ${this.createMetricCard('Accuracy', metrics.accuracy, 'Correctness of facts and information')}
+                    ${this.createMetricCard('Relevance', metrics.relevance, 'How well the answer addresses the question')}
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-800 mb-2">Assessment Summary</h4>
+                    <p class="text-sm text-gray-600">${overall.summary}</p>
+
+                    <div class="mt-3">
+                        <button onclick="ragInterface.toggleMetricsDetails()"
+                                class="text-sm text-orange-600 hover:text-orange-700 font-medium">
+                            View Detailed Breakdown →
+                        </button>
+                    </div>
+                </div>
+
+                <div id="metrics-details" class="hidden mt-4 space-y-3">
+                    ${this.createDetailedMetricBreakdown('Groundedness', metrics.groundedness)}
+                    ${this.createDetailedMetricBreakdown('Accuracy', metrics.accuracy)}
+                    ${this.createDetailedMetricBreakdown('Relevance', metrics.relevance)}
+                </div>
+            </div>
+        `;
+    }
+
+    createMetricCard(title, metric, description) {
+        const score = metric.score;
+        const isGood = score >= 80;
+        const progressColor = isGood ? 'bg-green-500' : (score >= 60 ? 'bg-yellow-500' : 'bg-red-500');
+        const textColor = isGood ? 'text-green-700' : (score >= 60 ? 'text-yellow-700' : 'text-red-700');
+        const bgColor = isGood ? 'bg-green-50' : (score >= 60 ? 'bg-yellow-50' : 'bg-red-50');
+
+        return `
+            <div class="border rounded-lg p-4 ${bgColor}">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-medium text-gray-800">${title}</h4>
+                    <span class="text-lg font-bold ${textColor}">${score}%</span>
+                </div>
+
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div class="${progressColor} h-2 rounded-full transition-all duration-300"
+                         style="width: ${score}%"></div>
+                </div>
+
+                <p class="text-xs text-gray-600">${description}</p>
+                ${score < 80 ? '<div class="mt-2 text-xs text-red-600 font-medium">⚠ Requires Review</div>' : ''}
+            </div>
+        `;
+    }
+
+    createDetailedMetricBreakdown(title, metric) {
+        const score = metric.score;
+        const isGood = score >= 80;
+
+        let detailContent = '';
+        if (title === 'Groundedness' && metric.evidence && metric.evidence.length > 0) {
+            detailContent = `
+                <div class="mt-2">
+                    <p class="text-sm font-medium text-gray-700">Supporting Evidence:</p>
+                    <ul class="list-disc list-inside text-sm text-gray-600 mt-1">
+                        ${metric.evidence.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        } else if (title === 'Accuracy' && metric.issues && metric.issues.length > 0) {
+            detailContent = `
+                <div class="mt-2">
+                    <p class="text-sm font-medium text-gray-700">Issues Found:</p>
+                    <ul class="list-disc list-inside text-sm text-red-600 mt-1">
+                        ${metric.issues.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        } else if (title === 'Relevance' && metric.alignment) {
+            detailContent = `
+                <div class="mt-2">
+                    <p class="text-sm font-medium text-gray-700">Alignment Assessment:</p>
+                    <p class="text-sm text-gray-600 mt-1">${metric.alignment}</p>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="border rounded-lg p-4 ${isGood ? 'bg-green-50' : 'bg-red-50'}">
+                <div class="flex items-center justify-between">
+                    <h5 class="font-medium text-gray-800">${title}</h5>
+                    <span class="text-sm font-bold ${isGood ? 'text-green-700' : 'text-red-700'}">${score}%</span>
+                </div>
+
+                <p class="text-sm text-gray-600 mt-2">${metric.reasoning}</p>
+                ${detailContent}
+            </div>
+        `;
+    }
+
+    toggleMetricsDetails() {
+        const detailsElement = document.getElementById('metrics-details');
+        if (detailsElement) {
+            detailsElement.classList.toggle('hidden');
+        }
     }
 
     displayError(errorMessage) {

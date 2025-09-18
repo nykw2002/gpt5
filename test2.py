@@ -669,7 +669,245 @@ Please provide a clear, organized response with the relevant information found."
         except Exception as e:
             error_msg = f"GPT-5 error: {e}"
             return error_msg
-    
+
+    def summarize_if_needed(self, answer: str, query_type: str) -> str:
+        """Intelligently summarize the answer if needed"""
+        if not self.access_token:
+            if not self.get_access_token():
+                return answer
+
+        # Create summarization prompt
+        prompt = f"""You are an intelligent summarization assistant. Your task is to decide whether the following answer needs summarization for better user experience.
+
+GUIDELINES:
+- If the answer is already concise (under 500 words) and well-formatted, return it as-is
+- If the answer is too long, repetitive, or contains excessive detail, provide a clear, concise summary
+- Always preserve the key information, numbers, and main conclusions
+- For counting queries: Always keep the exact count and essential list items
+- For analysis queries: Keep main insights and key findings
+- Start your response with either "SUMMARY:" or "ORIGINAL:" to indicate your decision
+
+QUERY TYPE: {query_type}
+
+ANSWER TO EVALUATE:
+{answer}
+
+RESPONSE:"""
+
+        url = f"{self.kgw_endpoint}/openai/deployments/gpt-5/chat/completions?api-version={self.api_version}"
+
+        headers = {
+            'Authorization': f'Bearer {self.access_token}',
+            'Content-Type': 'application/json'
+        }
+
+        payload = {
+            "messages": [{"role": "user", "content": prompt}],
+            "max_completion_tokens": 1500,
+            "reasoning_effort": "minimal"
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+
+            if response.status_code == 401:
+                if self.get_access_token():
+                    headers['Authorization'] = f'Bearer {self.access_token}'
+                    response = requests.post(url, headers=headers, json=payload, timeout=60)
+
+            if response.status_code == 200:
+                result = response.json()
+                content = result['choices'][0]['message']['content']
+
+                if content:
+                    # Check if it's a summary or original
+                    if content.startswith("SUMMARY:"):
+                        summarized = content.replace("SUMMARY:", "").strip()
+                        print("Answer was summarized for better readability")
+                        return summarized
+                    elif content.startswith("ORIGINAL:"):
+                        original = content.replace("ORIGINAL:", "").strip()
+                        print("Answer was kept as original (already concise)")
+                        return original
+                    else:
+                        # If no prefix, treat as summary
+                        print("Answer was processed for better readability")
+                        return content
+
+            print("Summarization failed, returning original answer")
+            return answer
+
+        except Exception as e:
+            print(f"Summarization error: {e}")
+            return answer
+
+    def evaluate_answer_quality(self, question: str, answer: str, source_chunks: List[str]) -> Dict[str, Any]:
+        """Evaluate answer quality across Groundedness, Accuracy, and Relevance metrics"""
+        if not self.access_token:
+            if not self.get_access_token():
+                return self.default_metrics()
+
+        # Prepare source context for evaluation
+        source_context = "\n\n".join([f"Source {i+1}:\n{chunk}" for i, chunk in enumerate(source_chunks)])
+
+        prompt = f"""You are an AI Quality Evaluator. Evaluate the following AI response across three critical metrics.
+
+EVALUATION CRITERIA:
+
+1. GROUNDEDNESS (0-100):
+   - Are the facts and claims in the answer directly supported by the provided source data?
+   - Is the answer based on verifiable information from the sources?
+   - Score: 100 = fully grounded in sources, 0 = no source support
+
+2. ACCURACY (0-100):
+   - Are the facts, numbers, and statements in the answer correct?
+   - Are calculations, counts, and data interpretations accurate?
+   - Score: 100 = completely accurate, 0 = major errors
+
+3. RELEVANCE (0-100):
+   - Does the answer directly address the user's question?
+   - Is the information provided pertinent to what was asked?
+   - Score: 100 = perfectly relevant, 0 = completely off-topic
+
+ORIGINAL QUESTION: {question}
+
+AI ANSWER TO EVALUATE:
+{answer}
+
+SOURCE DATA USED:
+{source_context}
+
+REQUIRED RESPONSE FORMAT (JSON):
+{{
+    "groundedness": {{
+        "score": [0-100],
+        "reasoning": "Brief explanation of score",
+        "evidence": ["Key supporting facts from sources"]
+    }},
+    "accuracy": {{
+        "score": [0-100],
+        "reasoning": "Brief explanation of score",
+        "issues": ["Any accuracy concerns found"]
+    }},
+    "relevance": {{
+        "score": [0-100],
+        "reasoning": "Brief explanation of score",
+        "alignment": "How well answer matches question intent"
+    }},
+    "overall_assessment": {{
+        "average_score": [calculated average],
+        "acceptable": [true if average >= 80],
+        "summary": "Brief overall quality assessment"
+    }}
+}}
+
+Respond ONLY with the JSON object:"""
+
+        url = f"{self.kgw_endpoint}/openai/deployments/gpt-5/chat/completions?api-version={self.api_version}"
+
+        headers = {
+            'Authorization': f'Bearer {self.access_token}',
+            'Content-Type': 'application/json'
+        }
+
+        payload = {
+            "messages": [{"role": "user", "content": prompt}],
+            "max_completion_tokens": 1000,
+            "reasoning_effort": "minimal"
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+
+            if response.status_code == 401:
+                if self.get_access_token():
+                    headers['Authorization'] = f'Bearer {self.access_token}'
+                    response = requests.post(url, headers=headers, json=payload, timeout=60)
+
+            if response.status_code == 200:
+                result = response.json()
+                content = result['choices'][0]['message']['content']
+
+                if content:
+                    try:
+                        # Parse JSON response
+                        import json
+                        metrics_data = json.loads(content.strip())
+
+                        # Validate and format the metrics
+                        formatted_metrics = self.format_metrics_response(metrics_data)
+                        print(f"Quality Metrics - Ground: {formatted_metrics['groundedness']['score']}%, Accuracy: {formatted_metrics['accuracy']['score']}%, Relevance: {formatted_metrics['relevance']['score']}%, Overall: {formatted_metrics['overall_assessment']['average_score']:.1f}%")
+
+                        return formatted_metrics
+
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse metrics JSON: {e}")
+                        return self.default_metrics()
+
+            print("Quality evaluation failed, using default metrics")
+            return self.default_metrics()
+
+        except Exception as e:
+            print(f"Quality evaluation error: {e}")
+            return self.default_metrics()
+
+    def format_metrics_response(self, raw_metrics: Dict) -> Dict[str, Any]:
+        """Format and validate metrics response"""
+        try:
+            groundedness = raw_metrics.get('groundedness', {})
+            accuracy = raw_metrics.get('accuracy', {})
+            relevance = raw_metrics.get('relevance', {})
+
+            # Calculate average if not provided
+            scores = [
+                groundedness.get('score', 0),
+                accuracy.get('score', 0),
+                relevance.get('score', 0)
+            ]
+            average = sum(scores) / len(scores) if scores else 0
+
+            return {
+                'groundedness': {
+                    'score': max(0, min(100, groundedness.get('score', 0))),
+                    'reasoning': groundedness.get('reasoning', 'No evaluation available'),
+                    'evidence': groundedness.get('evidence', [])
+                },
+                'accuracy': {
+                    'score': max(0, min(100, accuracy.get('score', 0))),
+                    'reasoning': accuracy.get('reasoning', 'No evaluation available'),
+                    'issues': accuracy.get('issues', [])
+                },
+                'relevance': {
+                    'score': max(0, min(100, relevance.get('score', 0))),
+                    'reasoning': relevance.get('reasoning', 'No evaluation available'),
+                    'alignment': relevance.get('alignment', 'No assessment available')
+                },
+                'overall_assessment': {
+                    'average_score': round(average, 1),
+                    'acceptable': average >= 80,
+                    'summary': raw_metrics.get('overall_assessment', {}).get('summary', 'Quality assessment completed'),
+                    'needs_review': average < 80
+                }
+            }
+
+        except Exception as e:
+            print(f"Error formatting metrics: {e}")
+            return self.default_metrics()
+
+    def default_metrics(self) -> Dict[str, Any]:
+        """Return default metrics when evaluation fails"""
+        return {
+            'groundedness': {'score': 0, 'reasoning': 'Evaluation unavailable', 'evidence': []},
+            'accuracy': {'score': 0, 'reasoning': 'Evaluation unavailable', 'issues': []},
+            'relevance': {'score': 0, 'reasoning': 'Evaluation unavailable', 'alignment': 'Unknown'},
+            'overall_assessment': {
+                'average_score': 0,
+                'acceptable': False,
+                'summary': 'Quality metrics evaluation failed',
+                'needs_review': True
+            }
+        }
+
     def query(self, question: str) -> Dict[str, Any]:
         """Execute adaptive query processing"""
         print(f"\nGeneral Purpose Query: {question}")
@@ -711,7 +949,8 @@ Please provide a clear, organized response with the relevant information found."
             "answer": answer,
             "query_classification": query_classification,
             "chunks_analyzed": len(relevant_chunks),
-            "chunk_analysis": chunk_analysis
+            "chunk_analysis": chunk_analysis,
+            "relevant_chunk_indices": relevant_chunk_indices  # Add this for quality evaluation
         }
 
 def main():
