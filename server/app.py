@@ -23,7 +23,9 @@ def initialize_rag_system():
         system_status['initialized'] = True
         system_status['error'] = None
 
-        default_doc = "test.txt"
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        default_doc = os.path.join(project_root, "test.txt")
+
         if os.path.exists(default_doc):
             success = rag_system.load_and_process_document(default_doc)
             if success:
