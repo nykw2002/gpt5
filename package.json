@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "yoga-wasm": "^0.0.2"
+  }
+}

@@ -1,1 +1,73 @@
-Analyze the overall complaint numbers by stating total substantiated and unsubstantiated complaints, compare to previous review period using "increased/decreased/remained same", include CAPA details if negative trends exist. Summarize main complaint reasons describing core issues and CAPA status as "in place/ongoing" or "not required". State Israel local market complaint numbers or note "No market-specific trends identified" if none, skip if centralized product. Summarize any significant market-specific trends or patterns. Confirm CAPA status for negative trends or incidents. Conclude using "No adverse trend identified" or "No CAPA required" where applicable. Format with proper nouns capitalized only, dd/mm/yyyy dates, "N/A" for blanks, distinct paragraphs. Structure first paragraph with overall numbers and comparison, separate paragraphs for 3+ complaints including reasons and CAPA status.
+Test 1:
+
+
+Prompt: Analyze the overall complaint numbers by stating total substantiated and unsubstantiated complaints, compare to previous review period using "increased/decreased/remained same", include CAPA details if negative trends exist. Summarize main complaint reasons describing core issues and CAPA status as "in place/ongoing" or "not required". State local market complaint numbers or note "No market-specific trends identified" if none, skip if centralized product. Summarize any significant market-specific trends or patterns. Confirm CAPA status for negative trends or incidents. Conclude using "No adverse trend identified" or "No CAPA required" where applicable. Format with proper nouns capitalized only, dd/mm/yyyy dates, "N/A" for blanks, distinct paragraphs. Structure first paragraph with overall numbers and comparison, separate paragraphs for 3+ complaints including reasons and CAPA status.
+
+Expected answer: 
+- Overall complaints: Decreased vs prior period.
+- Substantiated: 12 total (Q3’23: 4; Q4’23: 4; Q1’24: 3; Q2’24: 1) vs previous 18.
+- Unsubstantiated: 458 total (Q3’23: 115; Q4’23: 124; Q1’24: 151; Q2’24: 68) vs previous 665.
+- Under investigation: 9 (per QE-011142, due 10/06/2024).
+- Reasons/CAPA:
+- Substantiated reasons: Not itemized; no stability or quality-return issues noted. CAPA: ongoing; updates next review.
+- Unsubstantiated: Listed in Appendix 3 (not provided). No supplier/packaging trends. CAPA generally not required unless root cause found.
+- Trends:
+- No negative or market-specific trends identified (including Israel).
+- Stability: No OOS; change batches KP4K/KU2C support end-of-life specs.
+- Deviations: 14 major/critical; none escalated; no repeat trend; human factors implicated.
+- Materials/packaging: No adverse supplier trends. No market actions; no quality-related returns.
+- Key CAPA/Deviation:
+- DEV-006494 (Major) cleaning pipework; CAPA CPA-059744 ongoing; targeted remediation in progress.
+- Other deviations closed without CAPA; investigations satisfactory with no repeat trends.
+- Conclusions/Recommendations:
+- Complaints decreasing; no systemic product performance or stability issues.
+- Continue monitoring 9 open complaints and CAPA effectiveness (DEV-006494/CPA-059744) per QE-011142 in next review.
+- No immediate changes to Product Control Strategy or CPV; state of control maintained.
+- No CAPA required for overall complaints; deviation-specific CAPAs ongoing.
+
+
+
+Test 2:
+
+Prompt: How many complaints are from Israel?
+
+Expected output:
+
+- Count items in your complete list: 14
+- Verify this matches your final running total: Yes
+- If mismatch, recount and correct
+There are 14 complaints from Israel. Here is the complete list:
+1. 000201357115 - Pump does not work (Israel, PT3Y, 10000000097173)
+2. 000201362808 - Device will not spray (Israel, PT3Y, 10000000097173)
+3. 000201368601 - Device will not spray (Israel, PT3Y, 10000000097173)
+4. 000201390276 - Spray does not work (Israel, 9V2R, 10000000097173)
+5. 000201396289 - Pump does not work (Israel, PT3Y, 10000000097173)
+6. 000201399710 - Pump does not work (Israel, UC9T, 10000000097173)
+7. 000201412764 - The substance does not come out. (Israel, PT3Y, 10000000097173)
+8. 000201431674 - Will not spray (Israel, 6J7F, 10000000097173)
+9. 000201446598 - The substance does not come out (Israel, UC9T, 10000000097173)
+10. QE-004535 - Avamys nasal spray 120 dose; The substance does not come (Israel, 7R8M, 10000000097173)
+11. QE-006727 - Avamys AQ Nasal Spray 120D; The substance does not [come/spray] (Israel, EN8T, 10000000097173)
+12. QE-008974 - Avamys nasal spray 120 dose; The product does not spray (Israel, 7R8M, 10000000097173)
+13. QE-009576 - Avamys nasal spray 120 dose; The substance does not come (Israel, 9D6N, 10000000097173)
+14. QE-009755 - Avamys nasal spray 120 dose; The substance does not come (Israel, 7R8M, 10000000097173)
+
+
+
+
+
+the answers we are getting with the current setup:
+
+I can’t share my full step-by-step chain-of-thought, but here’s a concise, verifiable explanation and result.
+- Relevant items: The complaint entries that explicitly mention “Israel” are in Data Block 4 and Data Block 9.
+- Count: 2 occurrences of “Israel.”
+- Double-check: Reviewed all data blocks; only Blocks 4 and 9 include “Israel.”
+- Final total: 2 complaints from Israel.
+
+
+
+Total substantiated complaints for the current review period are 7, while unsubstantiated complaints total
+79. Compared to the previous review period, the overall complaint numbers have decreased. Corrective and Preventive Actions (CAPA) are in place for negative trends identified.
+Main complaint reasons include packaging material complaints and rejections, as well as a small number of ongoing product complaints. Core issues identified involve repeated deviations tied to specific locations, defect types, and causes, along with Critical Quality Attributes (CQAs) showing trends that require monitoring per EU GMP/WHO standards. CAPA status for these issues is in place.
+The Israel local market has reported 1 complaint. No significant market-specific trends or patterns have been identified in the provided data, confirming no adverse trend related to specific markets.
+No adverse trend identified. No CAPA required beyond those already in place.

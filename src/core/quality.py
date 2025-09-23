@@ -1,7 +1,7 @@
 import requests
 import json
 from typing import List, Dict, Any
-from .config import KGW_ENDPOINT, CHAT_MODEL_DEPLOYMENT, API_VERSION
+from .config import KGW_ENDPOINT, GPT_5_DEPLOYMENT, API_VERSION
 
 class QualityEvaluator:
     def __init__(self, auth_manager):
@@ -66,7 +66,7 @@ REQUIRED RESPONSE FORMAT (JSON):
 
 Respond ONLY with the JSON object:"""
 
-        url = f"{KGW_ENDPOINT}/openai/deployments/{CHAT_MODEL_DEPLOYMENT}/chat/completions?api-version={API_VERSION}"
+        url = f"{KGW_ENDPOINT}/openai/deployments/{GPT_5_DEPLOYMENT}/chat/completions?api-version={API_VERSION}"
 
         headers = {
             'Authorization': f'Bearer {self.auth_manager.access_token}',
@@ -79,7 +79,7 @@ Respond ONLY with the JSON object:"""
         }
 
         try:
-            print(f"Quality evaluation using model: {CHAT_MODEL_DEPLOYMENT}")
+            print(f"Quality evaluation using model: {GPT_5_DEPLOYMENT}")
             response = requests.post(url, headers=headers, json=payload, timeout=60)
 
             if response.status_code == 401:

@@ -1,6 +1,6 @@
 import requests
 from typing import Dict, Any
-from core.config import KGW_ENDPOINT, CHAT_MODEL_DEPLOYMENT, API_VERSION
+from core.config import KGW_ENDPOINT, GPT_5_DEPLOYMENT, API_VERSION
 
 class ResultSynthesizer:
     def __init__(self, auth_manager):
@@ -39,7 +39,7 @@ COMPREHENSIVE RESPONSE:
         if not self.auth_manager.ensure_authenticated():
             return "Error: Could not authenticate for synthesis"
 
-        url = f"{KGW_ENDPOINT}/openai/deployments/{CHAT_MODEL_DEPLOYMENT}/chat/completions?api-version={API_VERSION}"
+        url = f"{KGW_ENDPOINT}/openai/deployments/{GPT_5_DEPLOYMENT}/chat/completions?api-version={API_VERSION}"
 
         headers = {
             'Authorization': f'Bearer {self.auth_manager.access_token}',
