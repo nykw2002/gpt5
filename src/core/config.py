@@ -9,7 +9,10 @@ KGW_CLIENT_SECRET = os.getenv('KGW_CLIENT_SECRET')
 KGW_ENDPOINT = os.getenv('KGW_ENDPOINT')
 API_VERSION = os.getenv('AOAI_API_VERSION')
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL_DEPLOYMENT_NAME')
-CHAT_MODEL_DEPLOYMENT = os.getenv('CHAT_MODEL_DEPLOYMENT_NAME', 'gpt-4o')
+
+USE_GPT_5 = os.getenv('USE_GPT_5', 'true').lower() == 'true'
+GPT_5_DEPLOYMENT = os.getenv('GPT_5_DEPLOYMENT_NAME', 'gpt-5')
+CHAT_MODEL_DEPLOYMENT = GPT_5_DEPLOYMENT if USE_GPT_5 else os.getenv('CHAT_MODEL_DEPLOYMENT_NAME', 'gpt-4o')
 
 CHUNK_SIZES = {
     'structured_data': 25,

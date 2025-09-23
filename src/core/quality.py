@@ -75,8 +75,7 @@ Respond ONLY with the JSON object:"""
 
         payload = {
             "messages": [{"role": "user", "content": prompt}],
-            "max_completion_tokens": 1000,
-            "reasoning_effort": "minimal"
+            "max_completion_tokens": 1000
         }
 
         try:
