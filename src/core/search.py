@@ -36,11 +36,11 @@ class SearchService:
             selected = []
             for chunk_idx, similarity in similarities:
                 metadata = chunk_metadata[chunk_idx]
-                if metadata['type'] == 'structured_data' and similarity >= 0.3:
+                if metadata['type'] == 'structured_data' and similarity >= 0.25:
                     selected.append(chunk_idx)
-                elif similarity >= 0.6:
+                elif similarity >= 0.4:
                     selected.append(chunk_idx)
-                if len(selected) >= 15:
+                if len(selected) >= 30:
                     break
 
         elif query_type == 'analysis':

@@ -63,6 +63,10 @@ class GeneralPurposeRAG:
             "question": question,
             "answer": answer,
             "query_type": query_type,
+            "query_classification": {
+                "primary_type": query_type,
+                "confidence": 1.0
+            },
             "chunks_analyzed": len(relevant_chunks),
             "chunk_types": chunk_types,
             "quality_metrics": quality_metrics,
