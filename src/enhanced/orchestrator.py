@@ -9,13 +9,14 @@ from .execution import SubQueryExecutor
 from .synthesis import ResultSynthesizer
 
 class EnhancedRAG(GeneralPurposeRAG):
-    def __init__(self, cache_dir: str = "./embeddings_cache", progress_callback=None):
+    def __init__(self, cache_dir: str = "./embeddings_cache", progress_callback=None, use_decomposition: bool = False):
         super().__init__(cache_dir)
         self.decomposer = QueryDecomposer()
         self.executor = SubQueryExecutor(self, progress_callback)
         self.synthesizer = ResultSynthesizer(self.auth_manager)
         self.progress_callback = progress_callback
-        print("Enhanced RAG System with Prompt Decomposition initialized")
+        self.use_decomposition = use_decomposition
+        print(f"Enhanced RAG System initialized (Decomposition: {'enabled' if use_decomposition else 'disabled'})")
 
     def _send_progress(self, step: str, status: str, detail: str = ""):
         if self.progress_callback:
@@ -28,6 +29,10 @@ class EnhancedRAG(GeneralPurposeRAG):
     def enhanced_query(self, question: str) -> Dict[str, Any]:
         print(f"\nEnhanced Query: {question}")
         print("=" * 60)
+
+        if not self.use_decomposition:
+            print("Decomposition disabled - using standard processing with quality metrics")
+            return super().query(question)
 
         self._send_progress('analysis', 'active', 'Evaluating query structure and complexity...')
         query_complexity = self.decomposer.assess_query_complexity(question)

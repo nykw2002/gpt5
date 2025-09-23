@@ -6,7 +6,10 @@ class LLMService:
     def __init__(self, auth_manager):
         self.auth_manager = auth_manager
 
-    def query_gpt5_with_cot(self, query: str, context_chunks: List[str], query_type: str, model: str = "gpt-5") -> str:
+    def query_gpt5_with_cot(self, query: str, context_chunks: List[str], query_type: str, model: str = None) -> str:
+        if model is None:
+            from .config import CHAT_MODEL_DEPLOYMENT
+            model = CHAT_MODEL_DEPLOYMENT
         if not self.auth_manager.ensure_authenticated():
             return "Authentication failed"
 

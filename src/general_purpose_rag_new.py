@@ -1,6 +1,6 @@
 import os
 from typing import List, Dict, Any
-from core import AuthManager, EmbeddingService, ChunkingService, SearchService, LLMService
+from core import AuthManager, EmbeddingService, ChunkingService, SearchService, LLMService, QualityEvaluator
 
 class GeneralPurposeRAG:
     def __init__(self, cache_dir: str = "./embeddings_cache"):
@@ -9,6 +9,7 @@ class GeneralPurposeRAG:
         self.chunking_service = ChunkingService(self.embedding_service, cache_dir)
         self.search_service = SearchService(self.embedding_service)
         self.llm_service = LLMService(self.auth_manager)
+        self.quality_evaluator = QualityEvaluator(self.auth_manager)
 
         self.chunks = []
         self.chunk_embeddings = []
@@ -56,12 +57,16 @@ class GeneralPurposeRAG:
 
         answer = self.llm_service.query_gpt5_with_cot(question, relevant_chunks, query_type)
 
+        quality_metrics = self.quality_evaluator.evaluate_answer_quality(question, answer, relevant_chunks)
+
         return {
             "question": question,
             "answer": answer,
             "query_type": query_type,
             "chunks_analyzed": len(relevant_chunks),
-            "chunk_types": chunk_types
+            "chunk_types": chunk_types,
+            "quality_metrics": quality_metrics,
+            "relevant_chunk_indices": relevant_chunk_indices
         }
 
 

@@ -3,6 +3,7 @@ from .embeddings import EmbeddingService
 from .chunking import ChunkingService
 from .search import SearchService
 from .llm import LLMService
+from .quality import QualityEvaluator
 from .config import *
 
 __all__ = [
@@ -10,5 +11,6 @@ __all__ = [
     'EmbeddingService',
     'ChunkingService',
     'SearchService',
-    'LLMService'
+    'LLMService',
+    'QualityEvaluator'
 ]

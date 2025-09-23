@@ -19,7 +19,7 @@ def initialize_rag_system():
 
     try:
         print("Initializing RAG system...")
-        rag_system = EnhancedRAG()
+        rag_system = EnhancedRAG(use_decomposition=False)
         system_status['initialized'] = True
         system_status['error'] = None
 

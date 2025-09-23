@@ -29,12 +29,7 @@ def process_query(rag_system, system_status, question):
         query_type = result.get('query_classification', {}).get('primary_type', 'general')
         summarized_answer = processed_answer
 
-    if result.get('approach') == 'decomposition':
-        quality_metrics = {'overall_quality': 'Enhanced', 'groundedness': 95, 'accuracy': 95, 'relevance': 95}
-    else:
-        relevant_chunk_indices = result.get('relevant_chunk_indices', [])
-        source_chunks = [rag_system.chunks[i] for i in relevant_chunk_indices] if relevant_chunk_indices else []
-        quality_metrics = rag_system.evaluate_answer_quality(question, summarized_answer, source_chunks) if hasattr(rag_system, 'evaluate_answer_quality') else {}
+    quality_metrics = result.get('quality_metrics', {})
 
     response_data = {
         'question': result['question'],
@@ -74,7 +69,7 @@ def process_query_stream(rag_system, system_status, question):
     def process_in_background():
         try:
             from enhanced.orchestrator import EnhancedRAG
-            temp_rag = EnhancedRAG(progress_callback=progress_callback)
+            temp_rag = EnhancedRAG(progress_callback=progress_callback, use_decomposition=False)
             temp_rag.load_and_process_document(system_status['current_document'])
             result = temp_rag.enhanced_query(question)
             progress_queue.put({'type': 'result', 'data': result})
