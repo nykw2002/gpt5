@@ -80,9 +80,11 @@ Respond ONLY with the JSON object:"""
         }
 
         try:
+            print(f"Quality evaluation using model: {CHAT_MODEL_DEPLOYMENT}")
             response = requests.post(url, headers=headers, json=payload, timeout=60)
 
             if response.status_code == 401:
+                print("Quality eval: 401 Unauthorized, refreshing token...")
                 if self.auth_manager.get_access_token():
                     headers['Authorization'] = f'Bearer {self.auth_manager.access_token}'
                     response = requests.post(url, headers=headers, json=payload, timeout=60)
@@ -100,13 +102,17 @@ Respond ONLY with the JSON object:"""
 
                     except json.JSONDecodeError as e:
                         print(f"Failed to parse metrics JSON: {e}")
+                        print(f"Raw response: {content[:200]}...")
                         return self.default_metrics()
-
-            print("Quality evaluation failed, using default metrics")
-            return self.default_metrics()
+            else:
+                print(f"Quality evaluation failed with status {response.status_code}")
+                print(f"Response: {response.text[:200] if response.text else 'No response text'}")
+                return self.default_metrics()
 
         except Exception as e:
             print(f"Quality evaluation error: {e}")
+            import traceback
+            traceback.print_exc()
             return self.default_metrics()
 
     def format_metrics_response(self, raw_metrics: Dict) -> Dict[str, Any]:
