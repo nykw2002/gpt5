@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>General Purpose RAG System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="globals.css">
+    <link rel="stylesheet" href="globals.css?t=1726989000">
     <style>
         /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
@@ -44,6 +44,109 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Processing Steps Styles - CopilotKit Style */
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+        }
+
+        .step-pending {
+            border-left: 4px solid #d1d5db;
+        }
+
+        .step-active {
+            background-color: #fff7ed;
+            border: 1px solid #fb923c;
+            border-left: 4px solid #fb923c;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-completed {
+            background-color: #f0fdf4;
+            border: 1px solid #22c55e;
+            border-left: 4px solid #22c55e;
+        }
+
+        .step-number-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+            position: relative;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .step-pending .step-number-circle {
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+        }
+
+        .step-active .step-number-circle {
+            background-color: #fb923c;
+            color: white;
+            border: 2px solid #fb923c;
+        }
+
+        .step-completed .step-number-circle {
+            background-color: #22c55e;
+            color: white;
+            border: 2px solid #22c55e;
+        }
+
+        .step-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .step-detail {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .step-status {
+            color: #fb923c;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .step-completed .step-status {
+            color: #22c55e;
+        }
+
+        .step-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -147,7 +250,6 @@
                             <button
                                 id="submit-btn"
                                 class="px-6 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500 transition duration-200 font-medium"
-                                disabled
                             >
                                 <span id="submit-text">Submit Query</span>
                             </button>
@@ -235,17 +337,29 @@
         </div>
     </div>
 
-    <!-- Loading Modal -->
-    <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg p-8 max-w-sm mx-4">
-            <div class="text-center">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto mb-4"></div>
-                <h3 class="text-lg font-semibold mb-2">Processing Query</h3>
-                <p id="loading-text" class="text-gray-600 loading-dots">Analyzing your request</p>
+    <!-- Processing Steps Modal -->
+    <div id="processing-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 max-w-2xl mx-4 w-full max-h-[80vh] overflow-y-auto">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">Processing Your Query</h3>
+                <p class="text-gray-600 mt-2">Enhanced RAG with Query Decomposition</p>
+            </div>
+
+            <!-- Progress Steps -->
+            <div id="processing-steps" class="space-y-4">
+                <!-- Steps will be dynamically populated -->
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-6">
+                <div class="bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-orange-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="text-sm text-gray-600 mt-2 text-center">Getting started...</p>
             </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?t=1726989000"></script>
 </body>
 </html>
